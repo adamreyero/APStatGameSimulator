@@ -1,0 +1,336 @@
+<html>
+<head>
+	<style>
+	*{padding: 0; margin:0;}
+	canvas{ background: #eeee; display: block; margin: 0 auto;}
+	</style>
+</head>
+<body>
+<canvas id= "myCanvas" width="800" height="600"></canvas>
+<script type="text/javascript">
+var canvas = document.getElementById("myCanvas");
+var ctx = canvas.getContext("2d");
+document.addEventListener("mousemove", mouseMoveHandler, false);
+canvas.addEventListener("mousedown", getPosition, false);
+canvas.addEventListener("mouseup", getPosition2, false);
+
+var mouseIsDown = false;
+var pX = 0;
+var pY = 0;
+
+
+
+function getPosition2(event)
+{
+	mouseIsDown = false;
+}
+
+function getPosition(event)
+{
+	mouseIsDown = true;
+}
+
+function mouseMoveHandler(e)
+{
+    pX = e.clientX - canvas.offsetLeft;
+    pY = e.clientY - canvas.offsetTop;
+}
+
+var board = [
+[1,0,1,0,1,0],
+[0,0,0,0,0,0],
+[0,0,0,0,0,0],
+[0,0,0,0,0,0],
+[0,0,0,0,0,0],
+[0,2,0,2,0,2]
+];
+let cellSize = 100;
+let turn = 0;
+let prevPawn = "";
+let prevMove = "";
+let prevTurn = "";
+let blueWins = 0;
+let redWins = 0;
+let gameEnd = false;
+
+function drawBoard()
+{
+	let color = "white";
+	for(let x = 0; x < 6; x++)
+	{
+		if(color == "white")
+			{
+				color = "black";
+			}
+			else if(color == "black")
+			{
+				color = "white";
+			}
+		for(let y = 0; y < 6; y++)
+		{
+			ctx.fillStyle = color;
+			ctx.fillRect(cellSize * x, cellSize * y,cellSize,cellSize);
+			if(color == "white")
+			{
+				color = "black";
+			}
+			else if(color == "black")
+			{
+				color = "white";
+			}
+		}
+	}
+}
+
+function drawPawns()
+{
+	for(let x = 0; x < 6; x++)
+	{		
+		for(let y = 0; y < 6; y++)
+		{
+			ctx.fillStyle = "red";
+			if(board[y][x] == 2)
+			{
+				ctx.fillStyle = "blue";
+			}
+			if(board[y][x] != 0)
+			{
+				ctx.beginPath();
+				ctx.arc(cellSize/2 + x*cellSize,cellSize/2 + y*cellSize,cellSize/4,0,2*Math.PI);
+				ctx.closePath();
+				ctx.fill();
+			}
+		}
+	}
+}
+
+function doTurn()
+{
+		//"rolls" dice
+		let activatedPawn = 2 * Math.floor((Math.random() * 3));
+		prevPawn = (activatedPawn/2) + 1;
+		let moves = Math.floor((Math.random() * 2) + 1);
+		prevMove = moves;
+		prevTurn = turn;
+		
+		//locate piece in correct column
+		if(turn == 1) 
+		{
+			activatedPawn++;
+		}
+		for(let y = 0; y < 6; y++)
+		{
+			if(board[y][activatedPawn] != 0)
+			{
+				board[y][activatedPawn] = 0;
+				//red move
+				if(turn == 0)
+				{
+					if(y==4)
+					{
+						moves = 1;
+					}
+					if(y==5)
+					{
+						moves = 0;
+					}
+					board[y+moves][activatedPawn] = 1;
+					turn = 1;
+					console.log("----------------");
+				}				
+				//blue move
+				else
+				{
+					if(y==1)
+					{
+						moves = 1;
+					}
+					if(y==0)
+					{
+						moves = 0;
+					}
+					board[y-moves][activatedPawn] = 2;
+					turn = 0
+					console.log("--");
+				}
+				break;
+			}
+		}
+		if(winningConditions() == 1)
+		{
+			gameEnd = true;
+			redWins++;
+		}
+		if(winningConditions() == 2)
+		{
+			gameEnd = true;
+			blueWins++;
+		}
+}
+
+function singleTurn()
+{
+	ctx.fillStyle = "green";
+	ctx.fillRect(610,100,180,90);
+	ctx.fillStyle = "black";
+	ctx.font = "30px Arial";
+	if(pX > 610 && pX < 790 &&
+	pY > 100 && pY < 190)
+	{
+		ctx.fillStyle = "white";
+		if(mouseIsDown && gameEnd == false)
+		{
+			mouseIsDown = false;
+			doTurn();
+		}
+	}
+	ctx.fillText("Single Turn", 620, 150);
+}
+
+function simulateGameButton()
+{
+	ctx.fillStyle = "green";
+	ctx.fillRect(610,200,180,90);
+	ctx.fillStyle = "black";
+	ctx.font = "30px Arial";
+	if(pX > 610 && pX < 790 &&
+	pY > 200 && pY < 290)
+	{
+		ctx.fillStyle = "white";
+		if(mouseIsDown && gameEnd == false)
+		{
+			mouseIsDown = false;
+			simulateGame();
+		}
+	}
+	ctx.fillText("Simulate", 645, 240);
+	ctx.fillText("Game", 655, 270);
+}
+
+function simulateGame()
+{
+	while(!gameEnd)
+	{
+		doTurn();
+	}
+	reset();
+}
+
+function simulate25()
+{
+	ctx.fillStyle = "green";
+	ctx.fillRect(610,300,180,90);
+	ctx.fillStyle = "black";
+	ctx.font = "30px Arial";
+	if(pX > 610 && pX < 790 &&
+	pY > 300 && pY < 390)
+	{
+		ctx.fillStyle = "white";
+		if(mouseIsDown && gameEnd == false)
+		{
+			mouseIsDown = false;
+			for(let i = 0; i < 25; i++)
+			{
+				simulateGame();
+			}
+		}
+	}
+	ctx.fillText("Simulate", 645, 340);
+	ctx.fillText("25", 680, 370);
+}
+
+function winningConditions()
+{
+	if(board[5][0]==1 && board[5][2]==1 && board[5][4]==1)
+	{
+		return 1;
+	}
+	if(board[0][1]==2 && board[0][3]==2 && board[0][5]==2)
+	{
+		return 2;
+	}
+	return 0;
+}
+
+function menu()
+{
+	ctx.fillStyle = "black";
+	ctx.font = "20px Arial";
+	if(prevTurn == 0)
+	{
+		ctx.fillText("Red's Move", 600, 20);
+	}
+	else{
+		ctx.fillText("Blue's Move", 600, 20);
+	}
+	ctx.fillText("Activated Piece:" + (prevPawn), 600, 50);
+	ctx.fillText("Spaces Moved:" + (prevMove), 600,80);
+	
+	ctx.fillStyle = "red";
+	ctx.font = "50px Arial";
+	ctx.fillText(redWins, 610, 550);
+	ctx.fillStyle = "blue";
+	ctx.fillText(blueWins, 690, 550);
+	
+	ctx.font = "30px Arial";
+	if(winningConditions() == 1)
+	{
+		ctx.fillStyle = "red";
+		ctx.fillText("Red Wins!", 620, 580);
+	}
+	if(winningConditions() == 2)
+	{
+		ctx.fillStyle = "blue";
+		ctx.fillText("Blue Wins!", 620, 580);
+	}
+}
+
+function resetButton()
+{
+		ctx.fillStyle = "green";
+		ctx.fillRect(610,400,180,90);
+		ctx.fillStyle = "black";
+		ctx.font = "30px Arial";
+		if(pX > 610 && pX < 790 &&
+		pY > 400 && pY < 490)
+		{
+			ctx.fillStyle = "white";
+			if(mouseIsDown)
+			{
+				mouseIsDown = false;
+				reset();
+			}
+		}
+		ctx.fillText("Reset", 655, 450);
+}
+function reset()
+{
+	board = [
+	[1,0,1,0,1,0],
+	[0,0,0,0,0,0],
+	[0,0,0,0,0,0],
+	[0,0,0,0,0,0],
+	[0,0,0,0,0,0],
+	[0,2,0,2,0,2]
+	];
+	turn = 0;
+	prevPawn = "";
+	prevMove = "";
+	prevTurn = "";
+	gameEnd = false;
+}
+function draw()
+{
+	ctx.clearRect(0,0,800,600);
+	resetButton();
+	drawBoard();
+	drawPawns();
+	singleTurn();
+	simulateGameButton();
+	simulate25();
+	menu();
+}
+setInterval(draw, 10);
+</script>
+</body>
+</html>
